@@ -53,7 +53,7 @@ async function run() {
     const departmentsCollection = database.collection("departments");
     const confirmAppointmentsCollection = database.collection("confirmAppointments");
 
-    app.get("/doctors", verifyToken, async (req, res) => {
+    app.get("/doctors", async (req, res) => {
       const cursor = doctorsCollection.find();
       const result = await cursor.toArray();
       res.send(result);
