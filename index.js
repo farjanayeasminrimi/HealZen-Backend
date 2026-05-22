@@ -46,8 +46,22 @@ async function run() {
 
     app.post("/confirmAppointments", async (req, res) => {
       const appointmentData = req.body;
+      console.log(appointmentData);
       const appointment = await confirmAppointmentsCollection.insertOne(appointmentData);
       res.json(appointment);
+    });
+
+    app.patch("/confirmAppointments/:appointmentId", async (req, res) => {
+      const appointmentId = req.params.appointmentId;
+      const filter = {
+        _id: new ObjectId(appointmentId),
+      };
+      const updatedAppointment = req.body;
+      const updateDoc = {
+        $set: updatedAppointment,
+      };
+      const result = await confirmAppointmentsCollection.updateOne(filter, updateDoc);
+      res.json(result);
     });
 
     // Send a ping to confirm a successful connection
