@@ -5,6 +5,9 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const { verify } = require("node:crypto");
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
+
 const port = process.env.PORT;
 
 app.use(cors());
@@ -20,7 +23,25 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+const JWKS = createRemoteJWKSet(new URL(`${process.env.NEXT_CLIENT_URL}/api/auth/jwks`));
 
+const verifyToken = async (req, res, next) => {
+  const authHeader = req?.headers?.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  const token = authHeader.split(" ")[1];
+  console.log(token);
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  try {
+    const { payload } = await jwtVerify(token, JWKS);
+    next();
+  } catch (error) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+};
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -32,7 +53,7 @@ async function run() {
     const departmentsCollection = database.collection("departments");
     const confirmAppointmentsCollection = database.collection("confirmAppointments");
 
-    app.get("/doctors", async (req, res) => {
+    app.get("/doctors", verifyToken, async (req, res) => {
       const cursor = doctorsCollection.find();
       const result = await cursor.toArray();
       res.send(result);
@@ -44,7 +65,7 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/confirmAppointments", async (req, res) => {
+    app.post("/confirmAppointments", verifyToken, async (req, res) => {
       const appointmentData = req.body;
       console.log(appointmentData);
       const appointment = await confirmAppointmentsCollection.insertOne(appointmentData);
