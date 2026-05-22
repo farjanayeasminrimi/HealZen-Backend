@@ -30,6 +30,7 @@ async function run() {
     //  doctors collection
     const doctorsCollection = database.collection("doctors");
     const departmentsCollection = database.collection("departments");
+    const confirmAppointmentsCollection = database.collection("confirmAppointments");
 
     app.get("/doctors", async (req, res) => {
       const cursor = doctorsCollection.find();
@@ -41,6 +42,12 @@ async function run() {
       const cursor = departmentsCollection.find();
       const result = await cursor.toArray();
       res.send(result);
+    });
+
+    app.post("/confirmAppointments", async (req, res) => {
+      const appointmentData = req.body;
+      const appointment = await confirmAppointmentsCollection.insertOne(appointmentData);
+      res.json(appointment);
     });
 
     // Send a ping to confirm a successful connection
